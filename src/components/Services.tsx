@@ -20,6 +20,22 @@ const services = [
     popular: true,
   },
   {
+    icon: Linkedin,
+    title: "LinkedIn Optimization",
+    description: "Optimize your LinkedIn profile to attract recruiters and opportunities.",
+    price: "₹399",
+    features: ["Profile audit", "Headline optimization", "Keyword strategy"],
+    popular: false,
+  },
+  {
+    icon: FileText,
+    title: "Naukri Optimization",
+    description: "Boost your Naukri profile visibility to get more recruiter calls.",
+    price: "₹349",
+    features: ["Profile audit", "Keyword optimization", "Visibility boost"],
+    popular: false,
+  },
+  {
     icon: Users,
     title: "Career Mentorship",
     description: "1-on-1 guidance from industry professionals for your career path.",
