@@ -6,9 +6,9 @@ import {
   Briefcase, 
   FileText, 
   Users, 
-  Plus, 
   ArrowLeft,
-  LayoutDashboard
+  LayoutDashboard,
+  Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +19,7 @@ import AdminInternships from '@/components/admin/AdminInternships';
 import AdminApplications from '@/components/admin/AdminApplications';
 import AdminResumeServices from '@/components/admin/AdminResumeServices';
 import AdminStats from '@/components/admin/AdminStats';
+import AdminJobs from '@/components/admin/AdminJobs';
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -74,7 +75,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-5 lg:w-[600px] bg-muted/50">
+          <TabsList className="grid grid-cols-6 lg:w-[720px] bg-muted/50">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -86,6 +87,10 @@ const Admin = () => {
             <TabsTrigger value="internships" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
               <span className="hidden sm:inline">Internships</span>
+            </TabsTrigger>
+            <TabsTrigger value="jobs" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Jobs</span>
             </TabsTrigger>
             <TabsTrigger value="applications" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -107,6 +112,10 @@ const Admin = () => {
 
           <TabsContent value="internships">
             <AdminInternships />
+          </TabsContent>
+
+          <TabsContent value="jobs">
+            <AdminJobs />
           </TabsContent>
 
           <TabsContent value="applications">
