@@ -321,6 +321,35 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_jobs: {
+        Row: {
+          id: string
+          job_id: string
+          saved_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          job_id: string
+          saved_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          job_id?: string
+          saved_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
