@@ -69,6 +69,9 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-3">
             {user ? (
               <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="lg">Dashboard</Button>
+                </Link>
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="outline" size="lg">
@@ -137,6 +140,9 @@ export const Navbar = () => {
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {user ? (
                   <>
+                    <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full">Dashboard</Button>
+                    </Link>
                     {isAdmin && (
                       <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
                         <Button variant="outline" className="w-full">

@@ -10,8 +10,11 @@ import {
   ExternalLink,
   CheckCircle,
   AlertCircle,
-  Share2
+  Share2,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,12 +43,18 @@ const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingJob, setSavingJob] = useState(false);
 
   useEffect(() => {
-    if (id) fetchJob();
-  }, [id]);
+    if (id) {
+      fetchJob();
+      if (user) checkIfSaved();
+    }
+  }, [id, user]);
 
   const fetchJob = async () => {
     const { data, error } = await supabase
@@ -62,6 +71,52 @@ const JobDetail = () => {
       setJob(data);
     }
     setLoading(false);
+  };
+
+  const checkIfSaved = async () => {
+    if (!user || !id) return;
+    const { data } = await supabase
+      .from('saved_jobs')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('job_id', id)
+      .maybeSingle();
+    setIsSaved(!!data);
+  };
+
+  const toggleSaveJob = async () => {
+    if (!user) {
+      toast({ title: 'Login Required', description: 'Please login to save jobs', variant: 'destructive' });
+      navigate('/auth');
+      return;
+    }
+    if (!id) return;
+
+    setSavingJob(true);
+    if (isSaved) {
+      const { error } = await supabase
+        .from('saved_jobs')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('job_id', id);
+
+      if (!error) {
+        setIsSaved(false);
+        toast({ title: 'Removed', description: 'Job removed from saved list' });
+      }
+    } else {
+      const { error } = await supabase
+        .from('saved_jobs')
+        .insert({ user_id: user.id, job_id: id });
+
+      if (!error) {
+        setIsSaved(true);
+        toast({ title: 'Saved!', description: 'Job added to your saved list' });
+      } else if (error.code === '23505') {
+        setIsSaved(true);
+      }
+    }
+    setSavingJob(false);
   };
 
   const handleShare = async () => {
@@ -167,6 +222,14 @@ const JobDetail = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <Button 
+                    variant={isSaved ? "default" : "outline"} 
+                    size="icon" 
+                    onClick={toggleSaveJob}
+                    disabled={savingJob}
+                  >
+                    {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                  </Button>
                   <Button variant="outline" size="icon" onClick={handleShare}>
                     <Share2 className="w-4 h-4" />
                   </Button>
