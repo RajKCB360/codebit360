@@ -200,6 +200,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          ai_generated: boolean | null
           apply_url: string
           company_name: string
           created_at: string | null
@@ -210,12 +211,18 @@ export type Database = {
           job_title: string
           job_type: string
           location: string
+          original_text: string | null
           responsibilities: string | null
+          seo_description: string | null
+          seo_title: string | null
           skills: string[]
           source: string | null
+          source_url: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
+          ai_generated?: boolean | null
           apply_url: string
           company_name: string
           created_at?: string | null
@@ -226,12 +233,18 @@ export type Database = {
           job_title: string
           job_type?: string
           location: string
+          original_text?: string | null
           responsibilities?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           skills?: string[]
           source?: string | null
+          source_url?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
+          ai_generated?: boolean | null
           apply_url?: string
           company_name?: string
           created_at?: string | null
@@ -242,9 +255,14 @@ export type Database = {
           job_title?: string
           job_type?: string
           location?: string
+          original_text?: string | null
           responsibilities?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
           skills?: string[]
           source?: string | null
+          source_url?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
