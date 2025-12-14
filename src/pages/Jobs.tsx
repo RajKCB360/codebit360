@@ -195,10 +195,71 @@ const Jobs = () => {
             </div>
           </motion.div>
 
+          {/* Quick Filter Chips */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mb-8"
+          >
+            {/* Popular Skills */}
+            <div className="mb-4">
+              <p className="text-sm font-medium text-muted-foreground mb-2">Popular Skills</p>
+              <div className="flex flex-wrap gap-2">
+                {['React', 'Python', 'Java', 'JavaScript', 'Node.js', 'SQL', 'AWS', 'Machine Learning', 'Data Science', 'DevOps'].map((skill) => (
+                  <Badge
+                    key={skill}
+                    variant="outline"
+                    className={`cursor-pointer transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary ${
+                      searchTerm.toLowerCase() === skill.toLowerCase() 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : ''
+                    }`}
+                    onClick={() => setSearchTerm(searchTerm.toLowerCase() === skill.toLowerCase() ? '' : skill)}
+                  >
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {/* Popular Categories */}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">Popular Categories</p>
+              <div className="flex flex-wrap gap-2">
+                {['Developer', 'Data Analyst', 'Cloud Engineer', 'Full Stack', 'Backend', 'Frontend', 'QA', 'AI/ML'].map((category) => (
+                  <Badge
+                    key={category}
+                    variant="outline"
+                    className={`cursor-pointer transition-all hover:bg-secondary hover:text-secondary-foreground hover:border-secondary ${
+                      searchTerm.toLowerCase() === category.toLowerCase() 
+                        ? 'bg-secondary text-secondary-foreground border-secondary' 
+                        : ''
+                    }`}
+                    onClick={() => setSearchTerm(searchTerm.toLowerCase() === category.toLowerCase() ? '' : category)}
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
           {/* Results count */}
           <div className="flex items-center justify-between mb-6">
             <p className="text-muted-foreground">
               Showing <span className="text-foreground font-medium">{filteredJobs.length}</span> jobs
+              {searchTerm && (
+                <span className="ml-2">
+                  for "<span className="text-primary">{searchTerm}</span>"
+                  <button 
+                    onClick={() => setSearchTerm('')}
+                    className="ml-2 text-xs underline hover:no-underline"
+                  >
+                    Clear
+                  </button>
+                </span>
+              )}
             </p>
           </div>
 
