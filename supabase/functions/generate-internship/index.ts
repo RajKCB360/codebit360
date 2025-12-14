@@ -6,17 +6,73 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function scrapeInternshipPage(url: string, apiKey: string): Promise<string> {
+  console.log('Scraping URL:', url);
+  
+  const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      url,
+      formats: ['markdown'],
+      onlyMainContent: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Firecrawl error:', response.status, errorText);
+    throw new Error(`Failed to scrape URL: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.data?.markdown || data.markdown || '';
+  
+  if (!content) {
+    throw new Error('No content found at the provided URL');
+  }
+
+  console.log('Scraped content length:', content.length);
+  return content;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { internshipText } = await req.json();
+    const { internshipText, internshipUrl } = await req.json();
 
-    if (!internshipText) {
+    let content = internshipText;
+
+    // If URL provided, scrape it first
+    if (internshipUrl && !internshipText) {
+      const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
+      if (!FIRECRAWL_API_KEY) {
+        return new Response(
+          JSON.stringify({ error: 'URL scraping is not configured. Please use text input instead.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      try {
+        content = await scrapeInternshipPage(internshipUrl, FIRECRAWL_API_KEY);
+      } catch (scrapeError) {
+        console.error('Scraping failed:', scrapeError);
+        return new Response(
+          JSON.stringify({ error: `Failed to scrape URL. Try copying and pasting the text instead.` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    if (!content) {
       return new Response(
-        JSON.stringify({ error: 'Please provide internship text' }),
+        JSON.stringify({ error: 'Please provide internship text or URL' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -43,7 +99,7 @@ Return ONLY valid JSON with this exact structure:
 
     const userPrompt = `Convert this internship description into structured data:
 
-${internshipText}
+${content}
 
 Return ONLY the JSON object, no markdown formatting.`;
 
@@ -101,7 +157,7 @@ Return ONLY the JSON object, no markdown formatting.`;
     }
 
     // Add original text for reference
-    internship.original_text = internshipText;
+    internship.original_text = content;
 
     return new Response(
       JSON.stringify({ internship }),

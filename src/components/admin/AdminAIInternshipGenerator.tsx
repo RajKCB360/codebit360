@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Loader2, Save, Globe, Eye, EyeOff, FileText } from 'lucide-react';
+import { Sparkles, Loader2, Save, Globe, Eye, EyeOff, FileText, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -24,28 +25,50 @@ interface GeneratedInternship {
 
 const AdminAIInternshipGenerator = () => {
   const { toast } = useToast();
+  const [internshipUrl, setInternshipUrl] = useState('');
   const [internshipText, setInternshipText] = useState('');
+  const [inputMode, setInputMode] = useState<'url' | 'text'>('text');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedInternship, setGeneratedInternship] = useState<GeneratedInternship | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
 
   const handleGenerate = async () => {
-    if (!internshipText.trim()) {
+    const hasUrl = inputMode === 'url' && internshipUrl.trim();
+    const hasText = inputMode === 'text' && internshipText.trim();
+
+    if (!hasUrl && !hasText) {
       toast({
         title: 'Error',
-        description: 'Please paste the internship description',
+        description: inputMode === 'url' ? 'Please enter an internship URL' : 'Please paste the internship description',
         variant: 'destructive',
       });
       return;
+    }
+
+    if (inputMode === 'url') {
+      try {
+        new URL(internshipUrl);
+      } catch {
+        toast({
+          title: 'Invalid URL',
+          description: 'Please enter a valid URL (e.g., https://...)',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     setIsGenerating(true);
     setGeneratedInternship(null);
     
     try {
+      const body = inputMode === 'url' 
+        ? { internshipUrl }
+        : { internshipText };
+
       const { data, error } = await supabase.functions.invoke('generate-internship', {
-        body: { internshipText },
+        body,
       });
 
       if (error) throw new Error(error.message);
@@ -91,6 +114,7 @@ const AdminAIInternshipGenerator = () => {
         description: publish ? 'The internship is now live.' : 'You can publish it later.',
       });
 
+      setInternshipUrl('');
       setInternshipText('');
       setGeneratedInternship(null);
     } catch (error) {
@@ -131,40 +155,88 @@ const AdminAIInternshipGenerator = () => {
               Create Internship with AI
             </CardTitle>
             <CardDescription>
-              Paste internship details to auto-generate a structured internship post
+              Paste text (recommended) or provide a URL to auto-generate an internship post
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Paste Description</span>
-            </div>
-            <Textarea
-              placeholder="Paste internship description here..."
-              value={internshipText}
-              onChange={(e) => setInternshipText(e.target.value)}
-              rows={8}
-              className="text-sm"
-            />
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !internshipText.trim()}
-              size="lg"
-              className="w-full h-12"
-              variant="secondary"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Internship
-                </>
-              )}
-            </Button>
+            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'url' | 'text')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Paste Text
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex items-center gap-2">
+                  <Link2 className="w-4 h-4" />
+                  URL (Limited)
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="text" className="space-y-3 mt-4">
+                <Textarea
+                  placeholder="Copy & paste the internship description here..."
+                  value={internshipText}
+                  onChange={(e) => setInternshipText(e.target.value)}
+                  rows={8}
+                  className="text-sm"
+                />
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !internshipText.trim()}
+                  size="lg"
+                  className="w-full h-12"
+                  variant="secondary"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Internship
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Works with any internship description - just copy the text from any source.
+                </p>
+              </TabsContent>
+              
+              <TabsContent value="url" className="space-y-3 mt-4">
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="https://company.com/internships/... (LinkedIn not supported)"
+                    value={internshipUrl}
+                    onChange={(e) => setInternshipUrl(e.target.value)}
+                    className="flex-1 h-12"
+                    onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                  />
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !internshipUrl.trim()}
+                    size="lg"
+                    className="h-12 px-8"
+                    variant="secondary"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  ⚠️ LinkedIn, Indeed & some sites block scraping. Use "Paste Text" instead.
+                </p>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       )}
@@ -190,6 +262,7 @@ const AdminAIInternshipGenerator = () => {
                 size="sm"
                 onClick={() => {
                   setGeneratedInternship(null);
+                  setInternshipUrl('');
                   setInternshipText('');
                 }}
               >
