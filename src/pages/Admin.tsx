@@ -8,7 +8,8 @@ import {
   Users, 
   ArrowLeft,
   LayoutDashboard,
-  Building2
+  Building2,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +21,7 @@ import AdminApplications from '@/components/admin/AdminApplications';
 import AdminResumeServices from '@/components/admin/AdminResumeServices';
 import AdminStats from '@/components/admin/AdminStats';
 import AdminJobs from '@/components/admin/AdminJobs';
+import AdminAIJobGenerator from '@/components/admin/AdminAIJobGenerator';
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -75,7 +77,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-6 lg:w-[720px] bg-muted/50">
+          <TabsList className="grid grid-cols-7 lg:w-[840px] bg-muted/50">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -91,6 +93,10 @@ const Admin = () => {
             <TabsTrigger value="jobs" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               <span className="hidden sm:inline">Jobs</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai-jobs" className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Generator</span>
             </TabsTrigger>
             <TabsTrigger value="applications" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -116,6 +122,10 @@ const Admin = () => {
 
           <TabsContent value="jobs">
             <AdminJobs />
+          </TabsContent>
+
+          <TabsContent value="ai-jobs">
+            <AdminAIJobGenerator />
           </TabsContent>
 
           <TabsContent value="applications">
