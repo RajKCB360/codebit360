@@ -201,50 +201,56 @@ const Jobs = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
+                  whileHover={{ y: -4 }}
                 >
                   <Link to={`/jobs/${job.id}`}>
-                    <Card className="glass-card h-full hover:shadow-lg hover:border-primary/30 transition-all duration-300 cursor-pointer group">
+                    <Card className="glass-card h-full hover:shadow-xl hover:border-primary/30 transition-all duration-300 cursor-pointer group overflow-hidden">
                       <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
                               {job.job_title}
                             </CardTitle>
-                            <div className="flex items-center gap-2 mt-1 text-muted-foreground">
-                              <Building2 className="w-4 h-4" />
-                              <span>{job.company_name}</span>
+                            <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+                              <Building2 className="w-4 h-4 shrink-0" />
+                              <span className="truncate">{job.company_name}</span>
                             </div>
                           </div>
-                          <Badge 
-                            className={job.job_type === 'Internship' 
-                              ? 'bg-secondary/10 text-secondary' 
-                              : 'bg-primary/10 text-primary'}
+                          <span 
+                            className={`shrink-0 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                              job.job_type === 'Internship' 
+                                ? 'bg-secondary/10 text-secondary border-secondary/20' 
+                                : 'bg-primary/10 text-primary border-primary/20'
+                            }`}
                           >
                             {job.job_type}
-                          </Badge>
+                          </span>
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            {job.location}
+                        <div className="flex flex-wrap gap-3 mb-4 text-sm">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="truncate max-w-[120px]">{job.location}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            {job.experience_level}
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{job.experience_level}</span>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {job.skills.slice(0, 3).map(skill => (
-                            <Badge key={skill} variant="outline" className="text-xs">
+                            <span 
+                              key={skill} 
+                              className="inline-flex items-center rounded-md border border-border bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                            >
                               {skill}
-                            </Badge>
+                            </span>
                           ))}
                           {job.skills.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
+                            <span className="inline-flex items-center rounded-md border border-border bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                               +{job.skills.length - 3}
-                            </Badge>
+                            </span>
                           )}
                         </div>
                       </CardContent>
