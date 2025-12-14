@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Loader2, Save, Globe, Eye, EyeOff, Link2 } from 'lucide-react';
+import { Sparkles, Loader2, Save, Globe, Eye, EyeOff, Link2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,39 +32,50 @@ interface GeneratedJob {
 const AdminAIJobGenerator = () => {
   const { toast } = useToast();
   const [jobUrl, setJobUrl] = useState('');
+  const [jobText, setJobText] = useState('');
+  const [inputMode, setInputMode] = useState<'url' | 'text'>('text');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedJob, setGeneratedJob] = useState<GeneratedJob | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
 
   const handleGenerate = async () => {
-    if (!jobUrl.trim()) {
+    const hasUrl = inputMode === 'url' && jobUrl.trim();
+    const hasText = inputMode === 'text' && jobText.trim();
+
+    if (!hasUrl && !hasText) {
       toast({
         title: 'Error',
-        description: 'Please enter a job posting URL',
+        description: inputMode === 'url' ? 'Please enter a job posting URL' : 'Please paste the job description',
         variant: 'destructive',
       });
       return;
     }
 
-    // Basic URL validation
-    try {
-      new URL(jobUrl);
-    } catch {
-      toast({
-        title: 'Invalid URL',
-        description: 'Please enter a valid URL (e.g., https://...)',
-        variant: 'destructive',
-      });
-      return;
+    // URL validation only if using URL mode
+    if (inputMode === 'url') {
+      try {
+        new URL(jobUrl);
+      } catch {
+        toast({
+          title: 'Invalid URL',
+          description: 'Please enter a valid URL (e.g., https://...)',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     setIsGenerating(true);
     setGeneratedJob(null);
     
     try {
+      const body = inputMode === 'url' 
+        ? { jobUrl, rewriteStyle: 'fresher' }
+        : { jobText, rewriteStyle: 'fresher' };
+
       const { data, error } = await supabase.functions.invoke('generate-job', {
-        body: { jobUrl, rewriteStyle: 'fresher' },
+        body,
       });
 
       if (error) {
@@ -133,6 +145,7 @@ const AdminAIJobGenerator = () => {
 
       // Reset form
       setJobUrl('');
+      setJobText('');
       setGeneratedJob(null);
     } catch (error) {
       console.error('Save error:', error);
@@ -164,49 +177,95 @@ const AdminAIJobGenerator = () => {
         <Badge variant="secondary">Powered by AI</Badge>
       </div>
 
-      {/* Simple URL Input */}
+      {/* Input Section with Tabs */}
       {!generatedJob && (
         <Card className="border-2 border-dashed border-primary/20 bg-primary/5">
           <CardHeader className="text-center pb-2">
             <CardTitle className="flex items-center justify-center gap-2">
-              <Link2 className="w-5 h-5" />
-              Paste Job URL
+              <Sparkles className="w-5 h-5" />
+              Add Job with AI
             </CardTitle>
             <CardDescription>
-              Just paste any job posting URL and AI will automatically generate a ready-to-post job
+              Paste job text (recommended) or provide a URL to auto-generate a job post
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-3">
-              <Input
-                placeholder="https://linkedin.com/jobs/... or any job page URL"
-                value={jobUrl}
-                onChange={(e) => setJobUrl(e.target.value)}
-                className="flex-1 h-12 text-lg"
-                onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-              />
-              <Button
-                onClick={handleGenerate}
-                disabled={isGenerating || !jobUrl.trim()}
-                size="lg"
-                className="h-12 px-8"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate
-                  </>
-                )}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center">
-              Supports LinkedIn, Indeed, company career pages, and most job boards
-            </p>
+            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'url' | 'text')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Paste Text
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex items-center gap-2">
+                  <Link2 className="w-4 h-4" />
+                  URL (Limited)
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="text" className="space-y-3 mt-4">
+                <Textarea
+                  placeholder="Copy & paste the full job description here from LinkedIn, Indeed, or any job site..."
+                  value={jobText}
+                  onChange={(e) => setJobText(e.target.value)}
+                  rows={8}
+                  className="text-sm"
+                />
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !jobText.trim()}
+                  size="lg"
+                  className="w-full h-12"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Job Post
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Works with any job description - just copy the text from LinkedIn, Indeed, etc.
+                </p>
+              </TabsContent>
+              
+              <TabsContent value="url" className="space-y-3 mt-4">
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="https://company.com/careers/job... (LinkedIn not supported)"
+                    value={jobUrl}
+                    onChange={(e) => setJobUrl(e.target.value)}
+                    className="flex-1 h-12"
+                    onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                  />
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={isGenerating || !jobUrl.trim()}
+                    size="lg"
+                    className="h-12 px-8"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generate
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  ⚠️ LinkedIn, Indeed & some job boards block scraping. Use "Paste Text" instead.
+                </p>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       )}
