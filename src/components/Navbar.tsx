@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, ChevronDown } from "lucide-react";
+import { Menu, X, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
   { name: "Courses", href: "/#courses" },
@@ -116,6 +117,7 @@ export const Navbar = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden lg:flex items-center gap-2">
+            <ThemeToggle />
             {user ? (
               <>
                 <Link to="/dashboard">
@@ -164,11 +166,13 @@ export const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-          >
+          <div className="flex lg:hidden items-center gap-1">
+            <ThemeToggle />
+            <button
+              className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            >
             <AnimatePresence mode="wait">
               {isMobileMenuOpen ? (
                 <motion.div
@@ -192,7 +196,8 @@ export const Navbar = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
