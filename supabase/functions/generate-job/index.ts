@@ -78,10 +78,10 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY is not configured');
-      return new Response(JSON.stringify({ error: 'AI service not configured' }), {
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not configured');
+      return new Response(JSON.stringify({ error: 'AI service not configured. Please add GEMINI_API_KEY.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -125,40 +125,41 @@ Return output strictly in this JSON format (no markdown, no code blocks):
   "apply_url": "string - the apply/career URL if found in content, or empty string"
 }`;
 
-    console.log('Calling Lovable AI Gateway...');
+    console.log('Calling Gemini API...');
     
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+        contents: [
+          {
+            parts: [
+              { text: `${systemPrompt}\n\n${userPrompt}` }
+            ]
+          }
         ],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
       }),
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', response.status, errorText);
+      
       if (response.status === 429) {
-        console.error('Rate limit exceeded');
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
-        console.error('Payment required');
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
+      
       return new Response(JSON.stringify({ error: 'AI generation failed' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -166,17 +167,17 @@ Return output strictly in this JSON format (no markdown, no code blocks):
     }
 
     const data = await response.json();
-    const generatedText = data.choices?.[0]?.message?.content;
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!generatedText) {
-      console.error('No content in AI response');
+      console.error('No content in Gemini response:', JSON.stringify(data));
       return new Response(JSON.stringify({ error: 'AI returned empty response' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('AI response received:', generatedText.substring(0, 200));
+    console.log('Gemini response received:', generatedText.substring(0, 200));
 
     // Parse the JSON response - handle potential markdown code blocks
     let cleanedText = generatedText.trim();
@@ -195,7 +196,7 @@ Return output strictly in this JSON format (no markdown, no code blocks):
     try {
       jobData = JSON.parse(cleanedText);
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError, cleanedText);
+      console.error('Failed to parse Gemini response as JSON:', parseError, cleanedText);
       return new Response(JSON.stringify({ error: 'Failed to parse AI response', raw: cleanedText }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
