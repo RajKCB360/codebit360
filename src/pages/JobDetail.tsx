@@ -56,6 +56,25 @@ const JobDetail = () => {
     }
   }, [id, user]);
 
+  // Track page view
+  useEffect(() => {
+    if (id && job) {
+      trackEvent('view');
+    }
+  }, [id, job]);
+
+  const trackEvent = async (eventType: 'view' | 'save' | 'apply_click') => {
+    try {
+      await supabase.from('job_analytics').insert({
+        job_id: id,
+        event_type: eventType,
+        user_id: user?.id || null,
+      });
+    } catch (error) {
+      console.log('Analytics tracking error:', error);
+    }
+  };
+
   const fetchJob = async () => {
     const { data, error } = await supabase
       .from('jobs')
@@ -111,12 +130,17 @@ const JobDetail = () => {
 
       if (!error) {
         setIsSaved(true);
+        trackEvent('save');
         toast({ title: 'Saved!', description: 'Job added to your saved list' });
       } else if (error.code === '23505') {
         setIsSaved(true);
       }
     }
     setSavingJob(false);
+  };
+
+  const handleApplyClick = () => {
+    trackEvent('apply_click');
   };
 
   const handleShare = async () => {
@@ -251,7 +275,7 @@ const JobDetail = () => {
                 </Badge>
               </div>
 
-              <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+              <a href={job.apply_url} target="_blank" rel="noopener noreferrer" onClick={handleApplyClick}>
                 <Button variant="gradient" size="lg" className="w-full md:w-auto">
                   Apply Now
                   <ExternalLink className="w-4 h-4 ml-2" />
@@ -342,7 +366,7 @@ const JobDetail = () => {
 
               {/* Apply Button */}
               <div className="text-center">
-                <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+                <a href={job.apply_url} target="_blank" rel="noopener noreferrer" onClick={handleApplyClick}>
                   <Button variant="gradient" size="lg">
                     Apply on {job.source || 'Company Website'}
                     <ExternalLink className="w-4 h-4 ml-2" />

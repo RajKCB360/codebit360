@@ -198,6 +198,45 @@ export type Database = {
         }
         Relationships: []
       }
+      job_analytics: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          job_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          job_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          job_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_analytics_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_stats"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "job_analytics_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           ai_generated: boolean | null
@@ -363,6 +402,13 @@ export type Database = {
             foreignKeyName: "saved_jobs_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
+            referencedRelation: "job_stats"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
@@ -391,7 +437,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      job_stats: {
+        Row: {
+          apply_click_count: number | null
+          company_name: string | null
+          job_id: string | null
+          job_title: string | null
+          save_count: number | null
+          view_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
