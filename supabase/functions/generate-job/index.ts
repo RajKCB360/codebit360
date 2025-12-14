@@ -1,10 +1,42 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+async function scrapeJobPage(url: string, apiKey: string): Promise<string> {
+  console.log('Scraping URL:', url);
+  
+  const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      url: url,
+      formats: ['markdown'],
+      onlyMainContent: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Firecrawl error:', response.status, errorText);
+    throw new Error(`Failed to scrape URL: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const markdown = data.data?.markdown || data.markdown;
+  
+  if (!markdown) {
+    throw new Error('No content found on the page');
+  }
+  
+  console.log('Scraped content length:', markdown.length);
+  return markdown;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,10 +44,35 @@ serve(async (req) => {
   }
 
   try {
-    const { jobText, rewriteStyle } = await req.json();
+    const { jobUrl, jobText, rewriteStyle } = await req.json();
     
-    if (!jobText) {
-      return new Response(JSON.stringify({ error: 'Job text is required' }), {
+    let contentToProcess = jobText;
+    let sourceUrl = jobUrl;
+
+    // If URL is provided, scrape it
+    if (jobUrl && !jobText) {
+      const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
+      if (!FIRECRAWL_API_KEY) {
+        console.error('FIRECRAWL_API_KEY is not configured');
+        return new Response(JSON.stringify({ error: 'Scraping service not configured. Please add FIRECRAWL_API_KEY.' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      try {
+        contentToProcess = await scrapeJobPage(jobUrl, FIRECRAWL_API_KEY);
+      } catch (scrapeError) {
+        console.error('Scrape error:', scrapeError);
+        return new Response(JSON.stringify({ error: `Failed to scrape job page: ${scrapeError instanceof Error ? scrapeError.message : 'Unknown error'}` }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    
+    if (!contentToProcess) {
+      return new Response(JSON.stringify({ error: 'Please provide a job URL or job text' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -43,10 +100,13 @@ Rules:
 - Never mention LinkedIn, Naukri, or other job portals
 - Do NOT include confidential company information
 - Prices should be in Indian Rupee (₹)
-- Output VALID JSON ONLY - no markdown, no code blocks, just pure JSON`;
+- Output VALID JSON ONLY - no markdown, no code blocks, just pure JSON
+- Extract the apply URL from the content if available`;
 
     const userPrompt = `Job Content:
-${jobText}
+${contentToProcess}
+
+${sourceUrl ? `Source URL: ${sourceUrl}` : ''}
 
 Rewrite Style: ${rewriteStyle || 'fresher'}
 
@@ -61,7 +121,8 @@ Return output strictly in this JSON format (no markdown, no code blocks):
   "responsibilities": "string - bullet points separated by newlines",
   "eligibility": "string - degree requirements, graduation year, streams",
   "seo_title": "string - SEO optimized title under 60 chars",
-  "seo_description": "string - SEO meta description under 160 chars"
+  "seo_description": "string - SEO meta description under 160 chars",
+  "apply_url": "string - the apply/career URL if found in content, or empty string"
 }`;
 
     console.log('Calling Lovable AI Gateway...');
@@ -147,7 +208,8 @@ Return output strictly in this JSON format (no markdown, no code blocks):
       success: true, 
       job: {
         ...jobData,
-        original_text: jobText,
+        original_text: contentToProcess,
+        source_url: sourceUrl || null,
         ai_generated: true,
         status: 'draft'
       }
