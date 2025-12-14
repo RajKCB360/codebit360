@@ -198,6 +198,57 @@ export type Database = {
         }
         Relationships: []
       }
+      jobs: {
+        Row: {
+          apply_url: string
+          company_name: string
+          created_at: string | null
+          eligibility: string | null
+          experience_level: string
+          id: string
+          is_active: boolean | null
+          job_title: string
+          job_type: string
+          location: string
+          responsibilities: string | null
+          skills: string[]
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          apply_url: string
+          company_name: string
+          created_at?: string | null
+          eligibility?: string | null
+          experience_level?: string
+          id?: string
+          is_active?: boolean | null
+          job_title: string
+          job_type?: string
+          location: string
+          responsibilities?: string | null
+          skills?: string[]
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          apply_url?: string
+          company_name?: string
+          created_at?: string | null
+          eligibility?: string | null
+          experience_level?: string
+          id?: string
+          is_active?: boolean | null
+          job_title?: string
+          job_type?: string
+          location?: string
+          responsibilities?: string | null
+          skills?: string[]
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           college: string | null

@@ -8,8 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 const navLinks = [
   { name: "Courses", href: "#courses" },
   { name: "Internships", href: "#internships" },
+  { name: "Jobs", href: "/jobs", isRoute: true },
   { name: "Services", href: "#services" },
-  { name: "About", href: "#about" },
 ];
 
 export const Navbar = () => {
@@ -46,13 +46,23 @@ export const Navbar = () => {
 
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
-              >
-                {link.name}
-              </a>
+              link.isRoute ? (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
+                >
+                  {link.name}
+                </Link>
+              ) : (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground font-medium transition-colors duration-200"
+                >
+                  {link.name}
+                </a>
+              )
             ))}
           </div>
 
@@ -104,14 +114,25 @@ export const Navbar = () => {
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-foreground font-medium py-2 hover:text-primary transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {link.name}
-                </a>
+                link.isRoute ? (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    className="text-foreground font-medium py-2 hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    className="text-foreground font-medium py-2 hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </a>
+                )
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 {user ? (
