@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, Briefcase, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Briefcase, ExternalLink, Globe, FileEdit, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -38,6 +39,8 @@ interface Job {
   apply_url: string;
   source: string | null;
   is_active: boolean | null;
+  status: string | null;
+  ai_generated: boolean | null;
 }
 
 const AdminJobs = () => {
@@ -45,6 +48,7 @@ const AdminJobs = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [formData, setFormData] = useState({
     job_title: '',
     company_name: '',
@@ -145,6 +149,34 @@ const AdminJobs = () => {
     }
   };
 
+  const handlePublish = async (job: Job) => {
+    const { error } = await supabase
+      .from('jobs')
+      .update({ status: 'published', is_active: true })
+      .eq('id', job.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to publish job', variant: 'destructive' });
+    } else {
+      toast({ title: 'Published!', description: `${job.job_title} is now live` });
+      fetchJobs();
+    }
+  };
+
+  const handleUnpublish = async (job: Job) => {
+    const { error } = await supabase
+      .from('jobs')
+      .update({ status: 'draft', is_active: false })
+      .eq('id', job.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to unpublish job', variant: 'destructive' });
+    } else {
+      toast({ title: 'Unpublished', description: `${job.job_title} moved to drafts` });
+      fetchJobs();
+    }
+  };
+
   const resetForm = () => {
     setEditingJob(null);
     setFormData({
@@ -162,16 +194,43 @@ const AdminJobs = () => {
     });
   };
 
+  const filteredJobs = jobs.filter(job => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'published') return job.status === 'published' || (job.status === null && job.is_active);
+    if (statusFilter === 'draft') return job.status === 'draft' || (job.status === null && !job.is_active);
+    return true;
+  });
+
+  const draftCount = jobs.filter(j => j.status === 'draft' || (j.status === null && !j.is_active)).length;
+  const publishedCount = jobs.filter(j => j.status === 'published' || (j.status === null && j.is_active)).length;
+
   if (loading) {
     return <div className="animate-pulse text-muted-foreground">Loading jobs...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Manage Jobs</h2>
           <p className="text-muted-foreground">Add and curate job listings for students</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <TabsList>
+              <TabsTrigger value="all" className="gap-2">
+                All <Badge variant="secondary" className="ml-1">{jobs.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="published" className="gap-2">
+                <Globe className="w-3 h-3" />
+                Published <Badge variant="secondary" className="ml-1">{publishedCount}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="draft" className="gap-2">
+                <FileEdit className="w-3 h-3" />
+                Drafts <Badge variant="secondary" className="ml-1">{draftCount}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -331,7 +390,7 @@ const AdminJobs = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {jobs.map((job, index) => (
+        {filteredJobs.map((job, index) => (
           <motion.div
             key={job.id}
             initial={{ opacity: 0, y: 20 }}
@@ -345,6 +404,12 @@ const AdminJobs = () => {
                     <div className="flex items-center gap-2">
                       <Briefcase className="w-5 h-5 text-primary" />
                       <CardTitle className="text-lg">{job.job_title}</CardTitle>
+                      {job.ai_generated && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          AI
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-muted-foreground mt-1">{job.company_name} • {job.location}</p>
                   </div>
@@ -362,36 +427,56 @@ const AdminJobs = () => {
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge variant="secondary">{job.job_type}</Badge>
                   <Badge variant="outline">{job.experience_level}</Badge>
-                  <Badge variant="outline">{job.source}</Badge>
-                  {!job.is_active && (
-                    <Badge variant="destructive">Inactive</Badge>
+                  {job.status === 'draft' || (!job.status && !job.is_active) ? (
+                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+                      Draft
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                      Published
+                    </Badge>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1 mb-3">
                   {job.skills?.slice(0, 4).map(skill => (
                     <Badge key={skill} className="bg-primary/10 text-primary text-xs">
                       {skill}
                     </Badge>
                   ))}
                 </div>
-                <a 
-                  href={job.apply_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-3"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  {job.apply_url.substring(0, 40)}...
-                </a>
+                <div className="flex items-center justify-between mt-3">
+                  <a 
+                    href={job.apply_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    {job.apply_url.substring(0, 30)}...
+                  </a>
+                  {job.status === 'draft' || (!job.status && !job.is_active) ? (
+                    <Button size="sm" onClick={() => handlePublish(job)}>
+                      <Globe className="w-3 h-3 mr-1" />
+                      Publish
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => handleUnpublish(job)}>
+                      <FileEdit className="w-3 h-3 mr-1" />
+                      Unpublish
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
 
-      {jobs.length === 0 && (
+      {filteredJobs.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          No jobs found. Add your first job listing!
+          {statusFilter === 'all' 
+            ? 'No jobs found. Add your first job listing!' 
+            : `No ${statusFilter} jobs found.`}
         </div>
       )}
     </div>
