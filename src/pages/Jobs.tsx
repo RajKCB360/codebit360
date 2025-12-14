@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Briefcase, Clock, Building2 } from 'lucide-react';
+import { Search, MapPin, Briefcase, Clock, Building2, Code, Layers, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -120,7 +121,36 @@ const Jobs = () => {
             </p>
           </motion.div>
 
-          {/* Search & Filters */}
+          {/* Browse By Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="flex flex-wrap gap-3 mb-8 justify-center"
+          >
+            <Link to="/jobs/skills">
+              <Button variant="outline" className="gap-2 hover:bg-primary/10 hover:border-primary/30">
+                <Code className="w-4 h-4" />
+                Browse by Skill
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link to="/jobs/categories">
+              <Button variant="outline" className="gap-2 hover:bg-primary/10 hover:border-primary/30">
+                <Layers className="w-4 h-4" />
+                Browse by Category
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link to="/jobs/companies">
+              <Button variant="outline" className="gap-2 hover:bg-primary/10 hover:border-primary/30">
+                <Building2 className="w-4 h-4" />
+                Browse by Company
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
