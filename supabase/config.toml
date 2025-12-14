@@ -2,3 +2,6 @@ project_id = "mstfpndkxeedbhnqxunk"
 
 [functions.generate-job]
 verify_jwt = true
+
+[functions.generate-internship]
+verify_jwt = true

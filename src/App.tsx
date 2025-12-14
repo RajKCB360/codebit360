@@ -11,6 +11,9 @@ import Admin from "./pages/Admin";
 import Dashboard from "./pages/Dashboard";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
+import JobsBySkill from "./pages/JobsBySkill";
+import JobsByCategory from "./pages/JobsByCategory";
+import JobsByCompany from "./pages/JobsByCompany";
 import CourseManage from "./pages/CourseManage";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +35,12 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/jobs/:id" element={<JobDetail />} />
+              <Route path="/jobs/skills" element={<JobsBySkill />} />
+              <Route path="/jobs/skill/:skill" element={<JobsBySkill />} />
+              <Route path="/jobs/categories" element={<JobsByCategory />} />
+              <Route path="/jobs/category/:category" element={<JobsByCategory />} />
+              <Route path="/jobs/companies" element={<JobsByCompany />} />
+              <Route path="/jobs/company/:company" element={<JobsByCompany />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
