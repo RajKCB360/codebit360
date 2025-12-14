@@ -14,16 +14,298 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_free: boolean | null
+          level: string | null
+          price: number | null
+          syllabus: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_free?: boolean | null
+          level?: string | null
+          price?: number | null
+          syllabus?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_free?: boolean | null
+          level?: string | null
+          price?: number | null
+          syllabus?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      enrollments: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          enrolled_at: string | null
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          enrolled_at?: string | null
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          enrolled_at?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internship_applications: {
+        Row: {
+          admin_notes: string | null
+          applied_at: string | null
+          college: string | null
+          email: string
+          full_name: string
+          id: string
+          internship_id: string
+          phone: string | null
+          resume_url: string | null
+          reviewed_at: string | null
+          skills: string | null
+          status: string | null
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          applied_at?: string | null
+          college?: string | null
+          email: string
+          full_name: string
+          id?: string
+          internship_id: string
+          phone?: string | null
+          resume_url?: string | null
+          reviewed_at?: string | null
+          skills?: string | null
+          status?: string | null
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          applied_at?: string | null
+          college?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          internship_id?: string
+          phone?: string | null
+          resume_url?: string | null
+          reviewed_at?: string | null
+          skills?: string | null
+          status?: string | null
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internship_applications_internship_id_fkey"
+            columns: ["internship_id"]
+            isOneToOne: false
+            referencedRelation: "internships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internships: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          has_certificate: boolean | null
+          id: string
+          is_active: boolean | null
+          is_paid: boolean | null
+          price: number | null
+          skills: string[] | null
+          tasks: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          has_certificate?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          is_paid?: boolean | null
+          price?: number | null
+          skills?: string[] | null
+          tasks?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          has_certificate?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          is_paid?: boolean | null
+          price?: number | null
+          skills?: string[] | null
+          tasks?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          college: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          college?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          college?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      resume_services: {
+        Row: {
+          admin_feedback: string | null
+          completed_at: string | null
+          feedback_file_url: string | null
+          id: string
+          payment_amount: number | null
+          payment_status: string | null
+          requested_at: string | null
+          resume_url: string | null
+          service_type: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_feedback?: string | null
+          completed_at?: string | null
+          feedback_file_url?: string | null
+          id?: string
+          payment_amount?: number | null
+          payment_status?: string | null
+          requested_at?: string | null
+          resume_url?: string | null
+          service_type: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_feedback?: string | null
+          completed_at?: string | null
+          feedback_file_url?: string | null
+          id?: string
+          payment_amount?: number | null
+          payment_status?: string | null
+          requested_at?: string | null
+          resume_url?: string | null
+          service_type?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +432,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "student"],
+    },
   },
 } as const

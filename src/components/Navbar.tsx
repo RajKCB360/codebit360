@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { name: "Courses", href: "#courses" },
@@ -13,6 +15,7 @@ const navLinks = [
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,17 +35,15 @@ export const Navbar = () => {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-indigo to-brand-purple flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-lg">C</span>
             </div>
             <span className="text-xl font-bold text-foreground">
               Code<span className="gradient-text">Bit360</span>
             </span>
-          </a>
+          </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <a
@@ -55,14 +56,31 @@ export const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3">
-            <Button variant="ghost" size="lg">
-              Log In
-            </Button>
-            <Button variant="hero" size="lg">
-              Get Started
-            </Button>
+            {user ? (
+              <>
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" size="lg">
+                      <Shield className="w-4 h-4 mr-2" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Button variant="ghost" size="lg" onClick={signOut}>
+                  Log Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost" size="lg">Log In</Button>
+                </Link>
+                <Link to="/auth">
+                  <Button variant="hero" size="lg">Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -96,12 +114,30 @@ export const Navbar = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" className="w-full">
-                  Log In
-                </Button>
-                <Button variant="hero" className="w-full">
-                  Get Started
-                </Button>
+                {user ? (
+                  <>
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full">
+                          <Shield className="w-4 h-4 mr-2" />
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
+                    <Button variant="ghost" className="w-full" onClick={() => { signOut(); setIsMobileMenuOpen(false); }}>
+                      Log Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full">Log In</Button>
+                    </Link>
+                    <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="hero" className="w-full">Get Started</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
