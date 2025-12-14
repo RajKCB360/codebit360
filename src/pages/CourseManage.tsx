@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Clock, BookOpen, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
@@ -18,6 +17,23 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Json } from '@/integrations/supabase/types';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Chapter {
   id: string;
@@ -37,6 +53,82 @@ interface Course {
   syllabus: Json | null;
 }
 
+interface SortableChapterProps {
+  chapter: Chapter;
+  onEdit: (chapter: Chapter) => void;
+  onDelete: (id: string) => void;
+}
+
+const SortableChapter = ({ chapter, onEdit, onDelete }: SortableChapterProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: chapter.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card className={`glass-card hover:border-primary/30 transition-colors ${isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start gap-4">
+            <div
+              className="flex items-center gap-2 text-muted-foreground cursor-grab active:cursor-grabbing"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="w-4 h-4" />
+              <span className="font-mono text-sm w-6">{chapter.order}.</span>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold">{chapter.title}</h3>
+                {chapter.link && (
+                  <a
+                    href={chapter.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                {chapter.description}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline" className="text-xs">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {chapter.duration}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" onClick={() => onEdit(chapter)}>
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => onDelete(chapter.id)}>
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const CourseManage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -54,6 +146,13 @@ const CourseManage = () => {
     duration: '',
     link: '',
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -78,9 +177,9 @@ const CourseManage = () => {
       navigate('/admin');
     } else {
       setCourse(data);
-      // Parse syllabus as chapters
       if (data.syllabus && Array.isArray(data.syllabus)) {
-        setChapters(data.syllabus as unknown as Chapter[]);
+        const sortedChapters = (data.syllabus as unknown as Chapter[]).sort((a, b) => a.order - b.order);
+        setChapters(sortedChapters);
       }
     }
     setLoading(false);
@@ -97,6 +196,27 @@ const CourseManage = () => {
       return false;
     }
     return true;
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = chapters.findIndex((ch) => ch.id === active.id);
+      const newIndex = chapters.findIndex((ch) => ch.id === over.id);
+
+      const reorderedChapters = arrayMove(chapters, oldIndex, newIndex).map((ch, idx) => ({
+        ...ch,
+        order: idx + 1,
+      }));
+
+      setChapters(reorderedChapters);
+      
+      const success = await saveChapters(reorderedChapters);
+      if (success) {
+        toast({ title: 'Reordered', description: 'Chapter order updated' });
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,6 +337,7 @@ const CourseManage = () => {
             <BookOpen className="w-5 h-5 text-primary" />
             Course Syllabus ({chapters.length} chapters)
           </h2>
+          <p className="text-sm text-muted-foreground">Drag chapters to reorder them</p>
 
           {chapters.length === 0 ? (
             <Card className="glass-card">
@@ -225,63 +346,27 @@ const CourseManage = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {chapters
-                .sort((a, b) => a.order - b.order)
-                .map((chapter, index) => (
-                  <motion.div
-                    key={chapter.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className="glass-card hover:border-primary/30 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <GripVertical className="w-4 h-4" />
-                            <span className="font-mono text-sm w-6">{chapter.order}.</span>
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold">{chapter.title}</h3>
-                              {chapter.link && (
-                                <a
-                                  href={chapter.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {chapter.description}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {chapter.duration}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(chapter)}>
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(chapter.id)}>
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={chapters.map(ch => ch.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {chapters.map((chapter) => (
+                    <SortableChapter
+                      key={chapter.id}
+                      chapter={chapter}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
 
