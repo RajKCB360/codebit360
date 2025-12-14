@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, Briefcase, ExternalLink, Globe, FileEdit, Sparkles } from 'lucide-react';
+import { Plus, Pencil, Trash2, Briefcase, ExternalLink, Globe, FileEdit, Sparkles, Eye, Bookmark, MousePointerClick } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -43,11 +44,19 @@ interface Job {
   ai_generated: boolean | null;
 }
 
+interface JobStats {
+  job_id: string;
+  view_count: number;
+  save_count: number;
+  apply_click_count: number;
+}
+
 const AdminJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [jobStats, setJobStats] = useState<Record<string, JobStats>>({});
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [formData, setFormData] = useState({
     job_title: '',
@@ -66,6 +75,7 @@ const AdminJobs = () => {
 
   useEffect(() => {
     fetchJobs();
+    fetchJobStats();
   }, []);
 
   const fetchJobs = async () => {
@@ -80,6 +90,25 @@ const AdminJobs = () => {
       setJobs(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchJobStats = async () => {
+    const { data, error } = await supabase
+      .from('job_analytics')
+      .select('job_id, event_type');
+
+    if (!error && data) {
+      const statsMap: Record<string, JobStats> = {};
+      data.forEach((event: { job_id: string; event_type: string }) => {
+        if (!statsMap[event.job_id]) {
+          statsMap[event.job_id] = { job_id: event.job_id, view_count: 0, save_count: 0, apply_click_count: 0 };
+        }
+        if (event.event_type === 'view') statsMap[event.job_id].view_count++;
+        if (event.event_type === 'save') statsMap[event.job_id].save_count++;
+        if (event.event_type === 'apply_click') statsMap[event.job_id].apply_click_count++;
+      });
+      setJobStats(statsMap);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -424,6 +453,33 @@ const AdminJobs = () => {
                 </div>
               </CardHeader>
               <CardContent>
+                {/* Analytics Stats */}
+                <TooltipProvider>
+                  <div className="flex items-center gap-4 mb-3 p-2 bg-muted/50 rounded-lg">
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1.5 text-sm">
+                        <Eye className="w-4 h-4 text-blue-500" />
+                        <span className="font-medium">{jobStats[job.id]?.view_count || 0}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>Views</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1.5 text-sm">
+                        <Bookmark className="w-4 h-4 text-amber-500" />
+                        <span className="font-medium">{jobStats[job.id]?.save_count || 0}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>Saves</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1.5 text-sm">
+                        <MousePointerClick className="w-4 h-4 text-green-500" />
+                        <span className="font-medium">{jobStats[job.id]?.apply_click_count || 0}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>Apply Clicks</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
+
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge variant="secondary">{job.job_type}</Badge>
                   <Badge variant="outline">{job.experience_level}</Badge>
