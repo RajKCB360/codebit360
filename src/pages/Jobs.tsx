@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Briefcase, Clock, Building2, ExternalLink, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search, MapPin, Briefcase, Clock, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import SEO from '@/components/SEO';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Job {
@@ -66,8 +66,39 @@ const Jobs = () => {
 
   const uniqueLocations = [...new Set(jobs.map(job => job.location.split(',')[0].trim()))];
 
+  const jobListStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Tech Jobs for Freshers - CodeBit360",
+    "description": "Curated tech job listings for CS/IT students and freshers",
+    "itemListElement": filteredJobs.slice(0, 10).map((job, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "JobPosting",
+        "title": job.job_title,
+        "hiringOrganization": {
+          "@type": "Organization",
+          "name": job.company_name
+        },
+        "jobLocation": {
+          "@type": "Place",
+          "address": job.location
+        },
+        "employmentType": job.job_type === "Internship" ? "INTERN" : "FULL_TIME"
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Tech Jobs for Freshers & Students | CodeBit360 Job Portal"
+        description="Browse curated tech job listings for CS/IT students. Find internships, fresher jobs at top companies like TCS, Infosys, Google. Apply now!"
+        keywords="fresher jobs, tech internships, IT jobs India, CS student jobs, entry level developer jobs, software engineer fresher"
+        canonicalUrl="/jobs"
+        structuredData={jobListStructuredData}
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">

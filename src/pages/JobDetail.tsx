@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -15,9 +15,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import SEO from '@/components/SEO';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -77,6 +77,41 @@ const JobDetail = () => {
     }
   };
 
+  const jobStructuredData = useMemo(() => {
+    if (!job) return null;
+    return {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      "title": job.job_title,
+      "description": `${job.responsibilities || ""} Eligibility: ${job.eligibility || "Open to all eligible candidates"}`,
+      "datePosted": job.created_at,
+      "employmentType": job.job_type === "Internship" ? "INTERN" : job.job_type === "Part-time" ? "PART_TIME" : "FULL_TIME",
+      "hiringOrganization": {
+        "@type": "Organization",
+        "name": job.company_name,
+        "sameAs": job.apply_url
+      },
+      "jobLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": job.location
+        }
+      },
+      "skills": job.skills.join(", "),
+      "qualifications": job.eligibility || "Open to freshers and students",
+      "directApply": false
+    };
+  }, [job]);
+
+  const seoTitle = job 
+    ? `${job.job_title} at ${job.company_name} - Apply Now | CodeBit360`
+    : "Job Details | CodeBit360";
+  
+  const seoDescription = job
+    ? `Apply for ${job.job_title} at ${job.company_name} in ${job.location}. ${job.job_type} role for ${job.experience_level}. Skills: ${job.skills.slice(0, 3).join(", ")}. Apply via CodeBit360.`
+    : "View job details and apply on CodeBit360";
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -96,6 +131,14 @@ const JobDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords={`${job.job_title}, ${job.company_name} jobs, ${job.skills.join(", ")}, fresher jobs, ${job.location} jobs`}
+        canonicalUrl={`/jobs/${job.id}`}
+        ogType="article"
+        structuredData={jobStructuredData || undefined}
+      />
       <Navbar />
       
       <main className="pt-24 pb-16">
