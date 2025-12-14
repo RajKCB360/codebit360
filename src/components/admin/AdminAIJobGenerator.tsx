@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Loader2, Save, Globe, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, Loader2, Save, Globe, Eye, EyeOff, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,35 +22,48 @@ interface GeneratedJob {
   seo_title: string;
   seo_description: string;
   original_text: string;
+  apply_url: string;
+  source_url: string | null;
   ai_generated: boolean;
   status: string;
 }
 
 const AdminAIJobGenerator = () => {
   const { toast } = useToast();
-  const [jobText, setJobText] = useState('');
-  const [rewriteStyle, setRewriteStyle] = useState('fresher');
+  const [jobUrl, setJobUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedJob, setGeneratedJob] = useState<GeneratedJob | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
-  const [applyUrl, setApplyUrl] = useState('');
-  const [sourceUrl, setSourceUrl] = useState('');
 
   const handleGenerate = async () => {
-    if (!jobText.trim()) {
+    if (!jobUrl.trim()) {
       toast({
         title: 'Error',
-        description: 'Please paste job content or URL',
+        description: 'Please enter a job posting URL',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(jobUrl);
+    } catch {
+      toast({
+        title: 'Invalid URL',
+        description: 'Please enter a valid URL (e.g., https://...)',
         variant: 'destructive',
       });
       return;
     }
 
     setIsGenerating(true);
+    setGeneratedJob(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-job', {
-        body: { jobText, rewriteStyle },
+        body: { jobUrl, rewriteStyle: 'fresher' },
       });
 
       if (error) {
@@ -65,7 +77,7 @@ const AdminAIJobGenerator = () => {
       setGeneratedJob(data.job);
       toast({
         title: 'Job Generated!',
-        description: 'Review and edit the generated job before publishing.',
+        description: 'Review the job details and publish when ready.',
       });
     } catch (error) {
       console.error('Generation error:', error);
@@ -80,7 +92,9 @@ const AdminAIJobGenerator = () => {
   };
 
   const handleSave = async (publish: boolean) => {
-    if (!generatedJob || !applyUrl.trim()) {
+    if (!generatedJob) return;
+
+    if (!generatedJob.apply_url?.trim()) {
       toast({
         title: 'Error',
         description: 'Please provide an apply URL',
@@ -104,8 +118,8 @@ const AdminAIJobGenerator = () => {
         seo_description: generatedJob.seo_description,
         original_text: generatedJob.original_text,
         ai_generated: true,
-        source_url: sourceUrl || null,
-        apply_url: applyUrl,
+        source_url: generatedJob.source_url || jobUrl,
+        apply_url: generatedJob.apply_url,
         status: publish ? 'published' : 'draft',
         is_active: publish,
       });
@@ -118,10 +132,8 @@ const AdminAIJobGenerator = () => {
       });
 
       // Reset form
-      setJobText('');
+      setJobUrl('');
       setGeneratedJob(null);
-      setApplyUrl('');
-      setSourceUrl('');
     } catch (error) {
       console.error('Save error:', error);
       toast({
@@ -152,96 +164,90 @@ const AdminAIJobGenerator = () => {
         <Badge variant="secondary">Powered by AI</Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Panel */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Input Job Content</CardTitle>
+      {/* Simple URL Input */}
+      {!generatedJob && (
+        <Card className="border-2 border-dashed border-primary/20 bg-primary/5">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="flex items-center justify-center gap-2">
+              <Link2 className="w-5 h-5" />
+              Paste Job URL
+            </CardTitle>
+            <CardDescription>
+              Just paste any job posting URL and AI will automatically generate a ready-to-post job
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Source URL (Optional)</Label>
+            <div className="flex gap-3">
               <Input
-                placeholder="https://linkedin.com/jobs/..."
-                value={sourceUrl}
-                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder="https://linkedin.com/jobs/... or any job page URL"
+                value={jobUrl}
+                onChange={(e) => setJobUrl(e.target.value)}
+                className="flex-1 h-12 text-lg"
+                onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               />
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating || !jobUrl.trim()}
+                size="lg"
+                className="h-12 px-8"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate
+                  </>
+                )}
+              </Button>
             </div>
-
-            <div className="space-y-2">
-              <Label>Paste Job Description</Label>
-              <Textarea
-                placeholder="Paste the full job description here..."
-                value={jobText}
-                onChange={(e) => setJobText(e.target.value)}
-                rows={12}
-                className="resize-none"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Rewrite Style</Label>
-              <RadioGroup value={rewriteStyle} onValueChange={setRewriteStyle}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="fresher" id="fresher" />
-                  <Label htmlFor="fresher" className="cursor-pointer">Fresher (0 exp)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="0-2 years" id="experienced" />
-                  <Label htmlFor="experienced" className="cursor-pointer">0-2 Years Experience</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !jobText.trim()}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Job with AI
-                </>
-              )}
-            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Supports LinkedIn, Indeed, company career pages, and most job boards
+            </p>
           </CardContent>
         </Card>
+      )}
 
-        {/* Generated Output Panel */}
+      {/* Generated Job Preview & Edit */}
+      {generatedJob && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Generated Job {generatedJob && '(Editable)'}</CardTitle>
-            {generatedJob && (
+            <div>
+              <CardTitle>Generated Job</CardTitle>
+              <CardDescription>Review and edit before publishing</CardDescription>
+            </div>
+            <div className="flex gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowOriginal(!showOriginal)}
               >
                 {showOriginal ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
-                {showOriginal ? 'Hide' : 'Show'} Original
+                {showOriginal ? 'Hide' : 'View'} Original
               </Button>
-            )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setGeneratedJob(null);
+                  setJobUrl('');
+                }}
+              >
+                Start Over
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            {!generatedJob ? (
-              <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-                <Sparkles className="w-12 h-12 mb-4 opacity-50" />
-                <p>Generated job will appear here</p>
-                <p className="text-sm">Paste content and click Generate</p>
-              </div>
-            ) : showOriginal ? (
+            {showOriginal ? (
               <div className="p-4 bg-muted rounded-lg max-h-96 overflow-y-auto">
-                <Label className="text-sm font-medium">Original Content</Label>
+                <Label className="text-sm font-medium">Original Scraped Content</Label>
                 <pre className="mt-2 text-sm whitespace-pre-wrap">{generatedJob.original_text}</pre>
               </div>
             ) : (
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Job Title</Label>
@@ -287,7 +293,7 @@ const AdminAIJobGenerator = () => {
                   <Label>Skills (comma-separated)</Label>
                   <Input
                     value={generatedJob.skills.join(', ')}
-                    onChange={(e) => updateJobField('skills', e.target.value.split(',').map(s => s.trim()))}
+                    onChange={(e) => updateJobField('skills', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                   />
                 </div>
 
@@ -309,12 +315,22 @@ const AdminAIJobGenerator = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>SEO Title</Label>
-                  <Input
-                    value={generatedJob.seo_title}
-                    onChange={(e) => updateJobField('seo_title', e.target.value)}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>SEO Title</Label>
+                    <Input
+                      value={generatedJob.seo_title}
+                      onChange={(e) => updateJobField('seo_title', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Apply URL *</Label>
+                    <Input
+                      placeholder="https://company.com/careers/apply"
+                      value={generatedJob.apply_url || ''}
+                      onChange={(e) => updateJobField('apply_url', e.target.value)}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -326,16 +342,7 @@ const AdminAIJobGenerator = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Apply URL *</Label>
-                  <Input
-                    placeholder="https://company.com/careers/apply"
-                    value={applyUrl}
-                    onChange={(e) => setApplyUrl(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3 pt-4 border-t">
                   <Button
                     variant="outline"
                     onClick={() => handleSave(false)}
@@ -362,13 +369,13 @@ const AdminAIJobGenerator = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Disclaimer */}
       <Card className="bg-muted/50">
         <CardContent className="py-4">
           <p className="text-sm text-muted-foreground text-center">
-            <strong>Note:</strong> All AI-generated jobs are reviewed before publishing. 
+            <strong>Note:</strong> AI automatically scrapes and rewrites job content. 
             CodeBit360 is not the hiring company. Jobs are curated for educational purposes.
           </p>
         </CardContent>
