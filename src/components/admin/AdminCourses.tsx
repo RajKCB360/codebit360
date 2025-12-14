@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ interface Course {
 }
 
 const AdminCourses = () => {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -249,6 +251,30 @@ const AdminCourses = () => {
                   </div>
                 </div>
               </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                  {course.description}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <Badge variant="secondary">{course.level}</Badge>
+                  <Badge variant="outline">{course.duration}</Badge>
+                  <Badge className={course.is_free ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'}>
+                    {course.is_free ? 'Free' : `₹${course.price}`}
+                  </Badge>
+                  {!course.is_active && (
+                    <Badge variant="destructive">Inactive</Badge>
+                  )}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => navigate(`/admin/courses/${course.id}`)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage Syllabus
+                </Button>
+              </CardContent>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                   {course.description}
