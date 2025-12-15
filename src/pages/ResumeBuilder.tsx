@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ResumePreview } from "@/components/resume/ResumePreview";
 import {
   FileText,
   User,
@@ -31,15 +31,17 @@ import {
   Eye,
   Wand2,
   Loader2,
+  Palette,
 } from "lucide-react";
 
-// Resume templates
+// Resume templates with visual previews
 const templates = [
-  { id: "fresher", name: "Fresher / Student", description: "Perfect for college students and fresh graduates", color: "brand-indigo" },
-  { id: "developer", name: "Software Developer", description: "Technical resume for developers", color: "brand-cyan" },
-  { id: "devops", name: "DevOps / Cloud", description: "For cloud and infrastructure roles", color: "brand-purple" },
-  { id: "data", name: "Data / AI Roles", description: "Data science and ML positions", color: "brand-orange" },
-  { id: "experienced", name: "Experienced Pro", description: "For professionals with 3+ years", color: "brand-green" },
+  { id: "classic", name: "Classic", description: "Traditional and professional", color: "from-gray-600 to-gray-800", preview: "Georgia serif, elegant borders" },
+  { id: "modern", name: "Modern", description: "Sleek with indigo accents", color: "from-indigo-500 to-purple-600", preview: "Clean icons, gradient headers" },
+  { id: "creative", name: "Creative", description: "Two-column with teal sidebar", color: "from-teal-500 to-teal-700", preview: "Sidebar layout, photo placeholder" },
+  { id: "minimal", name: "Minimal", description: "Clean and spacious", color: "from-gray-400 to-gray-500", preview: "Helvetica, lots of whitespace" },
+  { id: "dark", name: "Developer Dark", description: "Tech-focused dark theme", color: "from-gray-800 to-cyan-900", preview: "Cyan accents, code-style headers" },
+  { id: "bold", name: "Bold", description: "High-impact with orange gradient", color: "from-orange-500 to-red-500", preview: "Bold colors, large headers" },
 ];
 
 const steps = [
@@ -94,7 +96,7 @@ interface ResumeData {
 }
 
 const defaultResumeData: ResumeData = {
-  template: "fresher",
+  template: "classic",
   personal: {
     fullName: "",
     email: "",
@@ -336,27 +338,26 @@ const ResumeBuilder = () => {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                     >
-                      <h2 className="text-xl font-semibold mb-4">Choose a Template</h2>
-                      <div className="grid gap-4">
+                      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <Palette className="w-5 h-5 text-primary" />
+                        Choose a Template
+                      </h2>
+                      <div className="grid grid-cols-2 gap-4">
                         {templates.map((template) => (
                           <button
                             key={template.id}
                             onClick={() => setResumeData(prev => ({ ...prev, template: template.id }))}
                             className={`p-4 rounded-xl border-2 text-left transition-all ${
                               resumeData.template === template.id
-                                ? "border-primary bg-primary/5"
+                                ? "border-primary ring-2 ring-primary/20"
                                 : "border-border hover:border-primary/30"
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-lg bg-${template.color}/10 flex items-center justify-center`}>
-                                <FileText className="w-5 h-5 text-primary" />
-                              </div>
-                              <div>
-                                <h3 className="font-medium">{template.name}</h3>
-                                <p className="text-sm text-muted-foreground">{template.description}</p>
-                              </div>
+                            <div className={`h-20 rounded-lg bg-gradient-to-br ${template.color} mb-3 flex items-center justify-center`}>
+                              <FileText className="w-8 h-8 text-white/80" />
                             </div>
+                            <h3 className="font-medium text-sm">{template.name}</h3>
+                            <p className="text-xs text-muted-foreground">{template.description}</p>
                           </button>
                         ))}
                       </div>
@@ -811,92 +812,7 @@ const ResumeBuilder = () => {
                 </div>
                 
                 {/* Resume Preview */}
-                <div 
-                  ref={previewRef}
-                  className="bg-white text-black p-6 rounded-lg shadow-inner min-h-[600px] text-sm print:shadow-none print:p-0"
-                  style={{ fontFamily: "Arial, sans-serif" }}
-                >
-                  {/* Header */}
-                  <div className="text-center mb-4 border-b pb-4">
-                    <h1 className="text-xl font-bold text-gray-900">
-                      {resumeData.personal.fullName || "Your Name"}
-                    </h1>
-                    <div className="text-xs text-gray-600 mt-1 flex flex-wrap justify-center gap-2">
-                      {resumeData.personal.email && <span>{resumeData.personal.email}</span>}
-                      {resumeData.personal.phone && <span>• {resumeData.personal.phone}</span>}
-                      {resumeData.personal.location && <span>• {resumeData.personal.location}</span>}
-                    </div>
-                    <div className="text-xs text-blue-600 mt-1 flex flex-wrap justify-center gap-2">
-                      {resumeData.personal.linkedin && <span>{resumeData.personal.linkedin}</span>}
-                      {resumeData.personal.github && <span>• {resumeData.personal.github}</span>}
-                    </div>
-                  </div>
-
-                  {/* Summary */}
-                  {resumeData.personal.summary && (
-                    <div className="mb-4">
-                      <h2 className="text-sm font-bold text-gray-900 border-b mb-2">PROFESSIONAL SUMMARY</h2>
-                      <p className="text-xs text-gray-700">{resumeData.personal.summary}</p>
-                    </div>
-                  )}
-
-                  {/* Skills */}
-                  {resumeData.skills.length > 0 && (
-                    <div className="mb-4">
-                      <h2 className="text-sm font-bold text-gray-900 border-b mb-2">SKILLS</h2>
-                      <p className="text-xs text-gray-700">{resumeData.skills.join(" • ")}</p>
-                    </div>
-                  )}
-
-                  {/* Experience */}
-                  {resumeData.experience.length > 0 && (
-                    <div className="mb-4">
-                      <h2 className="text-sm font-bold text-gray-900 border-b mb-2">EXPERIENCE</h2>
-                      {resumeData.experience.map((exp) => (
-                        <div key={exp.id} className="mb-3">
-                          <div className="flex justify-between">
-                            <span className="font-semibold text-xs">{exp.role || "Role"}</span>
-                            <span className="text-xs text-gray-500">{exp.duration}</span>
-                          </div>
-                          <div className="text-xs text-gray-600">{exp.company || "Company"}</div>
-                          <p className="text-xs text-gray-700 mt-1">{exp.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Projects */}
-                  {resumeData.projects.length > 0 && (
-                    <div className="mb-4">
-                      <h2 className="text-sm font-bold text-gray-900 border-b mb-2">PROJECTS</h2>
-                      {resumeData.projects.map((proj) => (
-                        <div key={proj.id} className="mb-3">
-                          <div className="font-semibold text-xs">{proj.name || "Project Name"}</div>
-                          <div className="text-xs text-gray-500">{proj.technologies}</div>
-                          <p className="text-xs text-gray-700 mt-1">{proj.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Education */}
-                  {resumeData.education.length > 0 && (
-                    <div className="mb-4">
-                      <h2 className="text-sm font-bold text-gray-900 border-b mb-2">EDUCATION</h2>
-                      {resumeData.education.map((edu) => (
-                        <div key={edu.id} className="mb-2">
-                          <div className="flex justify-between">
-                            <span className="font-semibold text-xs">{edu.degree || "Degree"}</span>
-                            <span className="text-xs text-gray-500">{edu.year}</span>
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            {edu.institution} {edu.score && `• ${edu.score}`}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <ResumePreview ref={previewRef} data={resumeData} />
               </Card>
             </div>
           </div>

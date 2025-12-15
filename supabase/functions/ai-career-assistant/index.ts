@@ -159,6 +159,37 @@ Include a mix of:
 Only return the JSON array, nothing else.`;
     }
 
+    if (action === "mock-interview-questions") {
+      const { role, count = 5 } = body;
+      parseAsJson = true;
+      
+      systemPrompt = `You are an expert interviewer for ${role} positions.`;
+      
+      userPrompt = `Generate ${count} interview questions for a ${role} mock interview.
+
+Return a JSON array:
+[{"id":1,"question":"...","type":"Technical|Behavioral|Problem Solving","difficulty":"easy|medium|hard","suggestedAnswer":"...","keyPoints":["point1","point2"]}]
+
+Mix question types. Only return JSON.`;
+    }
+
+    if (action === "evaluate-answer") {
+      const { question, answer, role, questionType } = body;
+      parseAsJson = true;
+      
+      systemPrompt = `You are an expert interview coach evaluating answers for ${role} positions.`;
+      
+      userPrompt = `Evaluate this interview answer:
+
+Question: ${question}
+Answer: ${answer}
+
+Return JSON:
+{"score":<0-100>,"strengths":["..."],"improvements":["..."],"sampleAnswer":"...","tips":["..."]}
+
+Be constructive. Only return JSON.`;
+    }
+
     if (parseAsJson) {
       const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
