@@ -231,32 +231,49 @@ const Roadmaps = () => {
         </div>
       </section>
 
-      {/* Preview Modal */}
+      {/* Preview Modal - Full Screen PDF Viewer */}
       <Dialog open={!!previewRoadmap} onOpenChange={() => setPreviewRoadmap(null)}>
-        <DialogContent className="max-w-5xl h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0">
+          <DialogHeader className="px-6 py-4 border-b bg-background/95 backdrop-blur">
             <DialogTitle className="flex items-center justify-between">
-              <span>{previewRoadmap?.title}</span>
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-5 w-5 text-primary" />
+                <div>
+                  <span className="font-semibold">{previewRoadmap?.title}</span>
+                  <div className="flex gap-2 mt-1">
+                    <Badge variant="secondary" className="text-xs">{previewRoadmap?.category}</Badge>
+                    <Badge variant="outline" className="text-xs">{previewRoadmap?.level}</Badge>
+                  </div>
+                </div>
+              </div>
               {previewRoadmap?.download_url && (
                 <Button 
-                  variant="outline" 
+                  variant="default" 
                   size="sm"
                   onClick={() => window.open(previewRoadmap.download_url!, "_blank")}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Download
+                  Download PDF
                 </Button>
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0">
-            {previewRoadmap?.preview_url && (
+          <div className="flex-1 w-full h-[calc(95vh-80px)] bg-muted/30">
+            {previewRoadmap?.preview_url ? (
               <iframe
                 src={previewRoadmap.preview_url}
-                className="w-full h-full rounded-lg border"
+                className="w-full h-full border-0"
                 title={previewRoadmap.title}
-                allow="autoplay"
+                allow="autoplay; fullscreen"
+                sandbox="allow-scripts allow-same-origin allow-popups"
               />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-center">
+                  <Map className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p>Preview not available</p>
+                </div>
+              </div>
             )}
           </div>
         </DialogContent>
