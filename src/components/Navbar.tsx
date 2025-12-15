@@ -10,6 +10,7 @@ const navLinks = [
   { name: "Courses", href: "/courses", isRoute: true },
   { name: "Internships", href: "/internships", isRoute: true },
   { name: "Jobs", href: "/jobs", isRoute: true },
+  { name: "Roadmaps", href: "/roadmaps", isRoute: true },
   { name: "Services", href: "/#services" },
 ];
 
