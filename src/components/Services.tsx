@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { FileText, Linkedin, MessageSquare, Users, ArrowRight, Check, Sparkles, Bot } from "lucide-react";
+import { FileText, Linkedin, MessageSquare, Users, ArrowRight, Check, Sparkles, Bot, IndianRupee, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const services = [
@@ -21,6 +21,24 @@ const services = [
     features: ["Career guidance chat", "Skill gap analysis", "Interview prep"],
     popular: false,
     link: "/career-assistant",
+  },
+  {
+    icon: IndianRupee,
+    title: "Salary Explorer",
+    description: "Explore tech salary ranges by role, experience, and city in India.",
+    price: "Free",
+    features: ["Role-based data", "City adjustments", "Growth trends"],
+    popular: false,
+    link: "/salary-explorer",
+  },
+  {
+    icon: Globe,
+    title: "Portfolio Generator",
+    description: "Generate a stunning portfolio website from your resume in one click.",
+    price: "Free",
+    features: ["Multiple themes", "HTML export", "Auto-import resume"],
+    popular: false,
+    link: "/portfolio-generator",
   },
   {
     icon: FileText,
