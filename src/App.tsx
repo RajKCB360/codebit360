@@ -18,6 +18,9 @@ import Internships from "./pages/Internships";
 import InternshipDetail from "./pages/InternshipDetail";
 import InternshipsBySkill from "./pages/InternshipsBySkill";
 import InternshipsByDomain from "./pages/InternshipsByDomain";
+import Courses from "./pages/Courses";
+import CourseDetail from "./pages/CourseDetail";
+import ChapterDetail from "./pages/ChapterDetail";
 import CourseManage from "./pages/CourseManage";
 import NotFound from "./pages/NotFound";
 
@@ -51,6 +54,9 @@ const App = () => (
               <Route path="/internships/skill/:skill" element={<InternshipsBySkill />} />
               <Route path="/internships/domains" element={<InternshipsByDomain />} />
               <Route path="/internships/domain/:domain" element={<InternshipsByDomain />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/courses/:id" element={<CourseDetail />} />
+              <Route path="/courses/:id/chapter/:chapterId" element={<ChapterDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -7,8 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navLinks = [
-  { name: "Courses", href: "/#courses" },
-  { name: "Internships", href: "/#internships" },
+  { name: "Courses", href: "/courses", isRoute: true },
+  { name: "Internships", href: "/internships", isRoute: true },
   { name: "Jobs", href: "/jobs", isRoute: true },
   { name: "Services", href: "/#services" },
 ];
