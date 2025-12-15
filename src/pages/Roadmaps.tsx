@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import SEO from "@/components/SEO";
 import { Navbar } from "@/components/Navbar";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Map, Download, Eye, Filter, BookOpen, TrendingUp } from "lucide-react";
+import { Search, Map, Download, Eye, Filter, BookOpen, TrendingUp, ZoomIn, ZoomOut, RotateCcw, Maximize, ExternalLink } from "lucide-react";
 
 interface Roadmap {
   id: string;
@@ -31,6 +32,7 @@ const Roadmaps = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedLevel, setSelectedLevel] = useState("All Levels");
   const [previewRoadmap, setPreviewRoadmap] = useState<Roadmap | null>(null);
+  const [zoom, setZoom] = useState(100);
 
   const { data: roadmaps, isLoading } = useQuery({
     queryKey: ["roadmaps"],
@@ -47,7 +49,12 @@ const Roadmaps = () => {
 
   const handlePreview = (roadmap: Roadmap) => {
     setPreviewRoadmap(roadmap);
+    setZoom(100);
   };
+
+  const handleZoomIn = () => setZoom((prev) => Math.min(prev + 25, 200));
+  const handleZoomOut = () => setZoom((prev) => Math.max(prev - 25, 50));
+  const handleResetZoom = () => setZoom(100);
 
   const filteredRoadmaps = roadmaps?.filter((roadmap) => {
     const matchesSearch = roadmap.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -182,17 +189,19 @@ const Roadmaps = () => {
               {filteredRoadmaps?.map((roadmap) => (
                 <Card key={roadmap.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
-                          {roadmap.title}
-                        </CardTitle>
-                        <CardDescription className="mt-2 line-clamp-2">
-                          {roadmap.description || "Comprehensive career roadmap"}
-                        </CardDescription>
+                    <Link to={`/roadmaps/${roadmap.id}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg line-clamp-2 group-hover:text-primary transition-colors">
+                            {roadmap.title}
+                          </CardTitle>
+                          <CardDescription className="mt-2 line-clamp-2">
+                            {roadmap.description || "Comprehensive career roadmap"}
+                          </CardDescription>
+                        </div>
+                        <BookOpen className="h-8 w-8 text-primary/20" />
                       </div>
-                      <BookOpen className="h-8 w-8 text-primary/20" />
-                    </div>
+                    </Link>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -207,21 +216,20 @@ const Roadmaps = () => {
 
                     <div className="flex gap-2 pt-2">
                       <Button 
+                        variant="outline"
                         className="flex-1" 
                         onClick={() => handlePreview(roadmap)}
                         disabled={!roadmap.preview_url}
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        Preview
+                        Quick Preview
                       </Button>
-                      {roadmap.download_url && (
-                        <Button 
-                          variant="outline"
-                          onClick={() => window.open(roadmap.download_url!, "_blank")}
-                        >
-                          <Download className="h-4 w-4" />
+                      <Link to={`/roadmaps/${roadmap.id}`} className="flex-1">
+                        <Button className="w-full">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          View Full
                         </Button>
-                      )}
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
@@ -231,11 +239,11 @@ const Roadmaps = () => {
         </div>
       </section>
 
-      {/* Preview Modal - Full Screen PDF Viewer */}
+      {/* Preview Modal - Full Screen PDF Viewer with Controls */}
       <Dialog open={!!previewRoadmap} onOpenChange={() => setPreviewRoadmap(null)}>
         <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 gap-0">
           <DialogHeader className="px-6 py-4 border-b bg-background/95 backdrop-blur">
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <BookOpen className="h-5 w-5 text-primary" />
                 <div>
@@ -246,27 +254,82 @@ const Roadmaps = () => {
                   </div>
                 </div>
               </div>
-              {previewRoadmap?.download_url && (
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  onClick={() => window.open(previewRoadmap.download_url!, "_blank")}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
-              )}
+              
+              {/* Zoom Controls */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={handleZoomOut}
+                    disabled={zoom <= 50}
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium w-12 text-center">{zoom}%</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={handleZoomIn}
+                    disabled={zoom >= 200}
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={handleResetZoom}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="flex gap-2">
+                  {previewRoadmap && (
+                    <Link to={`/roadmaps/${previewRoadmap.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Maximize className="h-4 w-4 mr-2" />
+                        Full Page
+                      </Button>
+                    </Link>
+                  )}
+                  {previewRoadmap?.download_url && (
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => window.open(previewRoadmap.download_url!, "_blank")}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  )}
+                </div>
+              </div>
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 w-full h-[calc(95vh-80px)] bg-muted/30">
+          <div className="flex-1 w-full h-[calc(95vh-100px)] bg-muted/30 overflow-auto">
             {previewRoadmap?.preview_url ? (
-              <iframe
-                src={previewRoadmap.preview_url}
-                className="w-full h-full border-0"
-                title={previewRoadmap.title}
-                allow="autoplay; fullscreen"
-                sandbox="allow-scripts allow-same-origin allow-popups"
-              />
+              <div 
+                className="w-full h-full flex justify-center"
+                style={{ padding: zoom > 100 ? "20px" : "0" }}
+              >
+                <iframe
+                  src={previewRoadmap.preview_url}
+                  className="border-0 transition-transform duration-200"
+                  style={{ 
+                    width: "100%",
+                    height: "100%",
+                    transform: `scale(${zoom / 100})`,
+                    transformOrigin: "top center"
+                  }}
+                  title={previewRoadmap.title}
+                  allow="autoplay; fullscreen"
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center">
