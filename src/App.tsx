@@ -26,6 +26,8 @@ import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetail from "./pages/RoadmapDetail";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import CareerAssistant from "./pages/CareerAssistant";
+import SalaryExplorer from "./pages/SalaryExplorer";
+import PortfolioGenerator from "./pages/PortfolioGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +67,8 @@ const App = () => (
               <Route path="/roadmaps/:id" element={<RoadmapDetail />} />
               <Route path="/resume-builder" element={<ResumeBuilder />} />
               <Route path="/career-assistant" element={<CareerAssistant />} />
+              <Route path="/salary-explorer" element={<SalaryExplorer />} />
+              <Route path="/portfolio-generator" element={<PortfolioGenerator />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
