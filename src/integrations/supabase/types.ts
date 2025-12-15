@@ -378,6 +378,51 @@ export type Database = {
         }
         Relationships: []
       }
+      roadmaps: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          download_url: string | null
+          drive_link: string
+          id: string
+          is_active: boolean | null
+          level: string
+          preview_url: string | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          download_url?: string | null
+          drive_link: string
+          id?: string
+          is_active?: boolean | null
+          level?: string
+          preview_url?: string | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          download_url?: string | null
+          drive_link?: string
+          id?: string
+          is_active?: boolean | null
+          level?: string
+          preview_url?: string | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       saved_jobs: {
         Row: {
           id: string

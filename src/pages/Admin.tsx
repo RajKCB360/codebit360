@@ -10,7 +10,8 @@ import {
   LayoutDashboard,
   Building2,
   Sparkles,
-  Wand2
+  Wand2,
+  Map
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,6 +25,7 @@ import AdminStats from '@/components/admin/AdminStats';
 import AdminJobs from '@/components/admin/AdminJobs';
 import AdminAIJobGenerator from '@/components/admin/AdminAIJobGenerator';
 import AdminAIInternshipGenerator from '@/components/admin/AdminAIInternshipGenerator';
+import { AdminRoadmaps } from '@/components/admin/AdminRoadmaps';
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -79,7 +81,7 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-4 lg:grid-cols-8 lg:w-[960px] bg-muted/50">
+          <TabsList className="grid grid-cols-4 lg:grid-cols-9 lg:w-[1080px] bg-muted/50">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -103,6 +105,10 @@ const Admin = () => {
             <TabsTrigger value="ai-jobs" className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">AI Jobs</span>
+            </TabsTrigger>
+            <TabsTrigger value="roadmaps" className="flex items-center gap-2">
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Roadmaps</span>
             </TabsTrigger>
             <TabsTrigger value="applications" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
@@ -136,6 +142,10 @@ const Admin = () => {
 
           <TabsContent value="ai-jobs">
             <AdminAIJobGenerator />
+          </TabsContent>
+
+          <TabsContent value="roadmaps">
+            <AdminRoadmaps />
           </TabsContent>
 
           <TabsContent value="applications">
