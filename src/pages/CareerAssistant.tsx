@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import MockInterview from "@/components/career/MockInterview";
 import {
   Bot,
   Send,
@@ -23,13 +24,11 @@ import {
   FileText,
   MessageSquare,
   Loader2,
-  RefreshCw,
   Lightbulb,
   CheckCircle,
   AlertTriangle,
-  ArrowRight,
   Copy,
-  ThumbsUp,
+  Mic,
 } from "lucide-react";
 
 interface Message {
@@ -72,6 +71,8 @@ const CareerAssistant = () => {
   const [interviewRole, setInterviewRole] = useState("");
   const [interviewQuestions, setInterviewQuestions] = useState<any[]>([]);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
+  const [showMockInterview, setShowMockInterview] = useState(false);
+  const [mockInterviewRole, setMockInterviewRole] = useState("");
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -249,7 +250,7 @@ const CareerAssistant = () => {
           {/* Main Content */}
           <div className="max-w-5xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-4 mb-6">
+              <TabsList className="grid grid-cols-5 mb-6">
                 <TabsTrigger value="chat" className="flex items-center gap-2">
                   <Bot className="w-4 h-4" />
                   <span className="hidden sm:inline">Chat</span>
@@ -260,11 +261,15 @@ const CareerAssistant = () => {
                 </TabsTrigger>
                 <TabsTrigger value="resume" className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
-                  <span className="hidden sm:inline">Resume Match</span>
+                  <span className="hidden sm:inline">Resume</span>
                 </TabsTrigger>
                 <TabsTrigger value="interview" className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  <span className="hidden sm:inline">Interview</span>
+                  <span className="hidden sm:inline">Questions</span>
+                </TabsTrigger>
+                <TabsTrigger value="mock" className="flex items-center gap-2">
+                  <Mic className="w-4 h-4" />
+                  <span className="hidden sm:inline">Mock</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -620,6 +625,43 @@ const CareerAssistant = () => {
                     </div>
                   )}
                 </Card>
+              </TabsContent>
+
+              {/* Mock Interview Tab */}
+              <TabsContent value="mock" className="space-y-6">
+                {!showMockInterview ? (
+                  <Card className="p-6">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Mic className="w-5 h-5 text-primary" />
+                      Mock Interview Practice
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Practice with AI-powered mock interviews. Get real-time feedback on your answers.
+                    </p>
+                    <div className="flex gap-4">
+                      <Input
+                        value={mockInterviewRole}
+                        onChange={(e) => setMockInterviewRole(e.target.value)}
+                        placeholder="Enter role (e.g., React Developer)"
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={() => {
+                          if (mockInterviewRole.trim()) setShowMockInterview(true);
+                        }}
+                        disabled={!mockInterviewRole.trim()}
+                      >
+                        <Mic className="w-4 h-4 mr-2" />
+                        Start Interview
+                      </Button>
+                    </div>
+                  </Card>
+                ) : (
+                  <MockInterview 
+                    role={mockInterviewRole} 
+                    onClose={() => setShowMockInterview(false)} 
+                  />
+                )}
               </TabsContent>
             </Tabs>
           </div>
