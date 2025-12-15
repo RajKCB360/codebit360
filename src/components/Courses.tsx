@@ -1,69 +1,20 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Clock, BarChart, Star, ArrowRight } from "lucide-react";
+import { Clock, ArrowRight, BookOpen, GraduationCap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const courses = [
-  {
-    title: "Python for Developers",
-    level: "Beginner",
-    duration: "8 weeks",
-    rating: 4.9,
-    students: "2.5K",
-    price: "Free",
-    image: "🐍",
-    tags: ["Python", "Backend", "Data"],
-  },
-  {
-    title: "Full Stack Web Development",
-    level: "Intermediate",
-    duration: "12 weeks",
-    rating: 4.8,
-    students: "3.2K",
-    price: "₹1,999",
-    image: "🌐",
-    tags: ["React", "Node.js", "MongoDB"],
-  },
-  {
-    title: "SQL & Database Fundamentals",
-    level: "Beginner",
-    duration: "6 weeks",
-    rating: 4.7,
-    students: "1.8K",
-    price: "₹999",
-    image: "🗄️",
-    tags: ["SQL", "PostgreSQL", "Database"],
-  },
-  {
-    title: "Cloud Computing Basics",
-    level: "Intermediate",
-    duration: "8 weeks",
-    rating: 4.9,
-    students: "1.5K",
-    price: "₹1,499",
-    image: "☁️",
-    tags: ["AWS", "Azure", "DevOps"],
-  },
-  {
-    title: "DevOps Fundamentals",
-    level: "Intermediate",
-    duration: "10 weeks",
-    rating: 4.8,
-    students: "1.2K",
-    price: "₹1,799",
-    image: "⚙️",
-    tags: ["Docker", "CI/CD", "Kubernetes"],
-  },
-  {
-    title: "Data Structures & Algorithms",
-    level: "Advanced",
-    duration: "12 weeks",
-    rating: 4.9,
-    students: "2.8K",
-    price: "₹2,499",
-    image: "🧮",
-    tags: ["DSA", "Problem Solving", "Interview"],
-  },
-];
+interface Course {
+  id: string;
+  title: string;
+  description: string | null;
+  level: string | null;
+  duration: string | null;
+  price: number | null;
+  is_free: boolean | null;
+  image_url: string | null;
+}
 
 const levelColors: Record<string, string> = {
   Beginner: "bg-brand-green/10 text-brand-green",
@@ -71,7 +22,38 @@ const levelColors: Record<string, string> = {
   Advanced: "bg-brand-purple/10 text-brand-purple",
 };
 
+const levelEmojis: Record<string, string> = {
+  Beginner: "🌱",
+  Intermediate: "🚀",
+  Advanced: "⚡",
+};
+
 export const Courses = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section id="courses" className="py-20 lg:py-32 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -108,71 +90,89 @@ export const Courses = () => {
         </div>
 
         {/* Courses Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {courses.map((course, index) => (
-            <motion.div
-              key={course.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="group bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-xl"
-            >
-              {/* Course Image */}
-              <div className="aspect-video bg-gradient-to-br from-brand-indigo/10 to-brand-purple/10 flex items-center justify-center text-6xl">
-                {course.image}
+        {loading ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card rounded-2xl border border-border p-6 animate-pulse">
+                <div className="aspect-video bg-muted rounded-lg mb-4" />
+                <div className="h-4 bg-muted rounded w-1/3 mb-3" />
+                <div className="h-6 bg-muted rounded w-3/4 mb-3" />
+                <div className="h-10 bg-muted rounded w-full" />
               </div>
+            ))}
+          </div>
+        ) : courses.length === 0 ? (
+          <div className="text-center py-16">
+            <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Courses Coming Soon</h3>
+            <p className="text-muted-foreground">
+              We're preparing exciting courses for you. Check back soon!
+            </p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {courses.map((course, index) => (
+              <motion.div
+                key={course.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Link to={`/courses/${course.id}`}>
+                  <div className="group bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-xl h-full">
+                    {/* Course Image */}
+                    <div className="aspect-video bg-gradient-to-br from-brand-indigo/10 to-brand-purple/10 flex items-center justify-center text-6xl">
+                      {course.image_url ? (
+                        <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+                      ) : (
+                        levelEmojis[course.level || "Beginner"] || "📚"
+                      )}
+                    </div>
 
-              {/* Course Content */}
-              <div className="p-6">
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${levelColors[course.level]}`}>
-                    {course.level}
-                  </span>
-                  {course.tags.slice(0, 2).map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                    {/* Course Content */}
+                    <div className="p-6">
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${levelColors[course.level || "Beginner"]}`}>
+                          {course.level || "Beginner"}
+                        </span>
+                      </div>
 
-                <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
-                  {course.title}
-                </h3>
+                      <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2">
+                        {course.title}
+                      </h3>
 
-                {/* Meta */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {course.duration}
+                      {/* Meta */}
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                        {course.duration && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {course.duration}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="w-4 h-4" />
+                          Course
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-4 border-t border-border">
+                        <span className={`text-xl font-bold ${course.is_free ? "text-brand-green" : "text-foreground"}`}>
+                          {course.is_free ? "Free" : `₹${course.price}`}
+                        </span>
+                        <Button size="sm" variant="default">
+                          View Course
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-brand-orange fill-brand-orange" />
-                    {course.rating}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <BarChart className="w-4 h-4" />
-                    {course.students}
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-border">
-                  <span className={`text-xl font-bold ${course.price === "Free" ? "text-brand-green" : "text-foreground"}`}>
-                    {course.price}
-                  </span>
-                  <Button size="sm" variant="default">
-                    Enroll Now
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         {/* CTA */}
         <motion.div
@@ -181,9 +181,11 @@ export const Courses = () => {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <Button variant="heroOutline" size="lg">
-            View All Courses
-            <ArrowRight className="w-5 h-5" />
+          <Button variant="heroOutline" size="lg" asChild>
+            <Link to="/courses">
+              View All Courses
+              <ArrowRight className="w-5 h-5" />
+            </Link>
           </Button>
         </motion.div>
       </div>
