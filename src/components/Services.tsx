@@ -1,8 +1,27 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { FileText, Linkedin, MessageSquare, Users, ArrowRight, Check } from "lucide-react";
+import { FileText, Linkedin, MessageSquare, Users, ArrowRight, Check, Sparkles, Bot } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const services = [
+  {
+    icon: FileText,
+    title: "Resume Builder",
+    description: "Create ATS-friendly resumes with AI-powered suggestions and templates.",
+    price: "Free",
+    features: ["Smart templates", "AI bullet points", "ATS score checker"],
+    popular: true,
+    link: "/resume-builder",
+  },
+  {
+    icon: Bot,
+    title: "AI Career Assistant",
+    description: "Get personalized career guidance, skill analysis, and interview prep.",
+    price: "Free",
+    features: ["Career guidance chat", "Skill gap analysis", "Interview prep"],
+    popular: false,
+    link: "/career-assistant",
+  },
   {
     icon: FileText,
     title: "Resume Review",
@@ -135,12 +154,17 @@ export const Services = () => {
                 ))}
               </ul>
 
-              <Button
-                variant={service.popular ? "hero" : "outline"}
-                className="w-full"
-              >
-                Get Started
-              </Button>
+              {service.link ? (
+                <Link to={service.link}>
+                  <Button variant={service.popular ? "hero" : "outline"} className="w-full">
+                    Get Started
+                  </Button>
+                </Link>
+              ) : (
+                <Button variant={service.popular ? "hero" : "outline"} className="w-full">
+                  Get Started
+                </Button>
+              )}
             </motion.div>
           ))}
         </div>

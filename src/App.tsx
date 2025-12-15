@@ -24,6 +24,8 @@ import ChapterDetail from "./pages/ChapterDetail";
 import CourseManage from "./pages/CourseManage";
 import Roadmaps from "./pages/Roadmaps";
 import RoadmapDetail from "./pages/RoadmapDetail";
+import ResumeBuilder from "./pages/ResumeBuilder";
+import CareerAssistant from "./pages/CareerAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +63,8 @@ const App = () => (
               <Route path="/courses/:id/chapter/:chapterId" element={<ChapterDetail />} />
               <Route path="/roadmaps" element={<Roadmaps />} />
               <Route path="/roadmaps/:id" element={<RoadmapDetail />} />
+              <Route path="/resume-builder" element={<ResumeBuilder />} />
+              <Route path="/career-assistant" element={<CareerAssistant />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
